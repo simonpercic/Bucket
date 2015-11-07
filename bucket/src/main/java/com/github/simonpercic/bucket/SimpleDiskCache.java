@@ -4,22 +4,16 @@ import android.support.annotation.NonNull;
 
 import com.jakewharton.disklrucache.DiskLruCache;
 
-import org.apache.commons.io.IOUtils;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,7 +23,6 @@ import java.util.Set;
 public class SimpleDiskCache {
 
     private static final int VALUE_IDX = 0;
-    private static final int METADATA_IDX = 1;
     private static final Set<String> USED_DIRS = new HashSet<>();
 
     private DiskLruCache diskLruCache;
@@ -63,7 +56,7 @@ public class SimpleDiskCache {
     }
 
     private static synchronized DiskLruCache createDiskLruCache(File cacheDir, long maxSizeBytes) throws IOException {
-        return DiskLruCache.open(cacheDir, 1, 2, maxSizeBytes);
+        return DiskLruCache.open(cacheDir, 1, 1, maxSizeBytes);
     }
 
     public void clear() throws IOException {
@@ -92,7 +85,13 @@ public class SimpleDiskCache {
             throw new IOException("");
         }
 
-        put(key, value, new HashMap<String, Serializable>());
+        OutputStream cos = null;
+        try {
+            cos = openStream(key);
+            cos.write(value.getBytes());
+        } finally {
+            if (cos != null) cos.close();
+        }
     }
 
     public boolean contains(String key) throws IOException {
@@ -103,10 +102,9 @@ public class SimpleDiskCache {
         return true;
     }
 
-    private OutputStream openStream(String key, Map<String, ? extends Serializable> metadata) throws IOException {
+    private OutputStream openStream(String key) throws IOException {
         DiskLruCache.Editor editor = diskLruCache.edit(toInternalKey(key));
         try {
-            writeMetadata(metadata, editor);
             BufferedOutputStream bos = new BufferedOutputStream(editor.newOutputStream(VALUE_IDX));
             return new CacheOutputStream(bos, editor);
         } catch (IOException e) {
@@ -115,31 +113,8 @@ public class SimpleDiskCache {
         }
     }
 
-    public void put(String key, String value, Map<String, ? extends Serializable> annotations) throws IOException {
-        OutputStream cos = null;
-        try {
-            cos = openStream(key, annotations);
-            cos.write(value.getBytes());
-        } finally {
-            if (cos != null) cos.close();
-        }
-    }
-
     public void delete(String key) throws IOException {
         diskLruCache.remove(toInternalKey(key));
-    }
-
-    private void writeMetadata(Map<String, ? extends Serializable> metadata, DiskLruCache.Editor editor)
-            throws IOException {
-
-        ObjectOutputStream oos = null;
-        try {
-            oos = new ObjectOutputStream(new BufferedOutputStream(
-                    editor.newOutputStream(METADATA_IDX)));
-            oos.writeObject(metadata);
-        } finally {
-            IOUtils.closeQuietly(oos);
-        }
     }
 
     private String toInternalKey(String key) {
