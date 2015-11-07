@@ -36,11 +36,8 @@ public class BucketCacheTest {
 
     @After
     public void tearDown() throws IOException {
-        SimpleDiskCache.usedDirs.clear();
-
         if (bucket != null) {
-            bucket.cache.clear();
-            bucket.cache.getCache().getDirectory().delete();
+            bucket.cache.destroy();
         }
     }
 
@@ -50,7 +47,7 @@ public class BucketCacheTest {
 
     @Test
     public void testBuildNoException() throws Exception {
-        BucketCache bucket = BucketCache.builder(context, 1024 * 1024).build();
+        bucket = BucketCache.builder(context, 1024 * 1024).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.cache);
@@ -58,18 +55,10 @@ public class BucketCacheTest {
     }
 
     @Test
-    public void testBuildSize() throws Exception {
-        int size = 1024 * 1024;
-        BucketCache bucket = BucketCache.builder(context, size).build();
-
-        assertEquals(size, bucket.cache.getCache().getMaxSize());
-    }
-
-    @Test
     public void testBuildGson() throws Exception {
         Gson gson = new Gson();
 
-        BucketCache bucket = BucketCache.builder(context, 1024 * 1024).withGson(gson).build();
+        bucket = BucketCache.builder(context, 1024 * 1024).withGson(gson).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.gson);

@@ -1,15 +1,15 @@
 package com.github.simonpercic.bucket;
 
+import android.support.annotation.NonNull;
+
 import com.jakewharton.disklrucache.DiskLruCache;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -17,10 +17,10 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Adapted from https://github.com/fhucho/simple-disk-cache
@@ -30,41 +30,50 @@ public class SimpleDiskCache {
 
     private static final int VALUE_IDX = 0;
     private static final int METADATA_IDX = 1;
-    static final List<File> usedDirs = new ArrayList<>();
+    private static final Set<String> USED_DIRS = new HashSet<>();
 
-    private com.jakewharton.disklrucache.DiskLruCache diskLruCache;
-    private int mAppVersion;
+    private DiskLruCache diskLruCache;
 
-    private SimpleDiskCache(File dir, int appVersion, long maxSize) throws IOException {
-        mAppVersion = appVersion;
-        diskLruCache = DiskLruCache.open(dir, appVersion, 2, maxSize);
-    }
+    private final File cacheDir;
+    private final long maxSizeBytes;
 
-    public static synchronized SimpleDiskCache open(File dir, int appVersion, long maxSize)
-            throws IOException {
-        if (usedDirs.contains(dir)) {
-            throw new IllegalStateException("Cache dir " + dir.getAbsolutePath() + " was used before.");
+    private SimpleDiskCache(String path, long maxSizeBytes) throws IOException {
+        this.cacheDir = new File(path);
+        this.maxSizeBytes = maxSizeBytes;
+
+        String cachePath = cacheDir.getPath();
+
+        if (USED_DIRS.contains(cachePath)) {
+            throw new IllegalStateException(String.format("Cache directory %s was used before.", cachePath));
         }
 
-        usedDirs.add(dir);
+        if (!cacheDir.exists()) {
+            if (!cacheDir.mkdir()) {
+                throw new IOException("Failed to create cache directory!");
+            }
+        }
 
-        return new SimpleDiskCache(dir, appVersion, maxSize);
+        USED_DIRS.add(cachePath);
+
+        diskLruCache = createDiskLruCache(cacheDir, maxSizeBytes);
     }
 
-    /**
-     * User should be sure there are no outstanding operations.
-     *
-     * @throws IOException
-     */
+    public static synchronized SimpleDiskCache create(String path, long maxSizeBytes) throws IOException {
+        return new SimpleDiskCache(path, maxSizeBytes);
+    }
+
+    private static synchronized DiskLruCache createDiskLruCache(File cacheDir, long maxSizeBytes) throws IOException {
+        return DiskLruCache.open(cacheDir, 1, 2, maxSizeBytes);
+    }
+
     public void clear() throws IOException {
-        File dir = diskLruCache.getDirectory();
-        long maxSize = diskLruCache.getMaxSize();
         diskLruCache.delete();
-        diskLruCache = DiskLruCache.open(dir, mAppVersion, 2, maxSize);
+        diskLruCache = createDiskLruCache(cacheDir, maxSizeBytes);
     }
 
-    public DiskLruCache getCache() {
-        return diskLruCache;
+    void destroy() throws IOException {
+        diskLruCache.delete();
+        USED_DIRS.remove(cacheDir.getPath());
     }
 
     public StringEntry getString(String key) throws IOException {
@@ -78,6 +87,14 @@ public class SimpleDiskCache {
         }
     }
 
+    public void put(String key, String value) throws IOException {
+        if (value.getBytes().length > diskLruCache.getMaxSize()) {
+            throw new IOException("");
+        }
+
+        put(key, value, new HashMap<String, Serializable>());
+    }
+
     public boolean contains(String key) throws IOException {
         DiskLruCache.Snapshot snapshot = diskLruCache.get(toInternalKey(key));
         if (snapshot == null) return false;
@@ -86,8 +103,7 @@ public class SimpleDiskCache {
         return true;
     }
 
-    public OutputStream openStream(String key, Map<String, ? extends Serializable> metadata)
-            throws IOException {
+    private OutputStream openStream(String key, Map<String, ? extends Serializable> metadata) throws IOException {
         DiskLruCache.Editor editor = diskLruCache.edit(toInternalKey(key));
         try {
             writeMetadata(metadata, editor);
@@ -99,12 +115,7 @@ public class SimpleDiskCache {
         }
     }
 
-    public void put(String key, String value) throws IOException {
-        put(key, value, new HashMap<String, Serializable>());
-    }
-
-    public void put(String key, String value, Map<String, ? extends Serializable> annotations)
-            throws IOException {
+    public void put(String key, String value, Map<String, ? extends Serializable> annotations) throws IOException {
         OutputStream cos = null;
         try {
             cos = openStream(key, annotations);
@@ -112,11 +123,15 @@ public class SimpleDiskCache {
         } finally {
             if (cos != null) cos.close();
         }
-
     }
 
-    private void writeMetadata(Map<String, ? extends Serializable> metadata,
-            DiskLruCache.Editor editor) throws IOException {
+    public void delete(String key) throws IOException {
+        diskLruCache.remove(toInternalKey(key));
+    }
+
+    private void writeMetadata(Map<String, ? extends Serializable> metadata, DiskLruCache.Editor editor)
+            throws IOException {
+
         ObjectOutputStream oos = null;
         try {
             oos = new ObjectOutputStream(new BufferedOutputStream(
@@ -124,22 +139,6 @@ public class SimpleDiskCache {
             oos.writeObject(metadata);
         } finally {
             IOUtils.closeQuietly(oos);
-        }
-    }
-
-    private Map<String, Serializable> readMetadata(DiskLruCache.Snapshot snapshot)
-            throws IOException {
-        ObjectInputStream ois = null;
-        try {
-            ois = new ObjectInputStream(new BufferedInputStream(
-                    snapshot.getInputStream(METADATA_IDX)));
-            @SuppressWarnings("unchecked")
-            Map<String, Serializable> annotations = (Map<String, Serializable>) ois.readObject();
-            return annotations;
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } finally {
-            IOUtils.closeQuietly(ois);
         }
     }
 
@@ -208,7 +207,7 @@ public class SimpleDiskCache {
         }
 
         @Override
-        public void write(byte[] buffer) throws IOException {
+        public void write(@NonNull byte[] buffer) throws IOException {
             try {
                 super.write(buffer);
             } catch (IOException e) {
@@ -218,7 +217,7 @@ public class SimpleDiskCache {
         }
 
         @Override
-        public void write(byte[] buffer, int offset, int length) throws IOException {
+        public void write(@NonNull byte[] buffer, int offset, int length) throws IOException {
             try {
                 super.write(buffer, offset, length);
             } catch (IOException e) {

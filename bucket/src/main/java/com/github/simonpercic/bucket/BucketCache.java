@@ -5,7 +5,6 @@ import android.content.Context;
 import com.github.simonpercic.bucket.SimpleDiskCache.StringEntry;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 
@@ -77,15 +76,9 @@ public class BucketCache {
         }
 
         public synchronized BucketCache build() throws IOException {
-            File cacheDir = new File(context.getCacheDir() + "/BucketCache");
+            String cachePath = context.getCacheDir() + "/BucketCache";
 
-            if (!cacheDir.exists()) {
-                if (!cacheDir.mkdir()) {
-                    throw new IOException("Failed to create cache directory!");
-                }
-            }
-
-            SimpleDiskCache cache = SimpleDiskCache.open(cacheDir, 1, maxSizeBytes);
+            SimpleDiskCache cache = SimpleDiskCache.create(cachePath, maxSizeBytes);
 
             if (gson == null) {
                 gson = new Gson();
