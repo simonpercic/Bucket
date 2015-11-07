@@ -2,7 +2,6 @@ package com.github.simonpercic.bucket;
 
 import android.content.Context;
 
-import com.github.simonpercic.bucket.SimpleDiskCache.StringEntry;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -24,14 +23,10 @@ public class BucketCache {
     // region synchronous methods
 
     public <T> T get(String key, Type typeOfT) throws IOException {
-        StringEntry entry = cache.getString(key);
+        String json = cache.getString(key);
 
-        if (entry != null) {
-            String json = entry.getString();
-
-            if (json != null && json.length() > 0) {
-                return gson.fromJson(json, typeOfT);
-            }
+        if (json != null && json.length() > 0) {
+            return gson.fromJson(json, typeOfT);
         }
 
         return null;

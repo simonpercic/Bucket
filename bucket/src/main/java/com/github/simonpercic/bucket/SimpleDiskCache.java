@@ -76,12 +76,12 @@ public class SimpleDiskCache {
         USED_DIRS.remove(cacheDir.getPath());
     }
 
-    public StringEntry getString(String key) throws IOException {
+    public String getString(String key) throws IOException {
         DiskLruCache.Snapshot snapshot = diskLruCache.get(toInternalKey(key));
         if (snapshot == null) return null;
 
         try {
-            return new StringEntry(snapshot.getString(VALUE_IDX));
+            return snapshot.getString(VALUE_IDX);
         } finally {
             snapshot.close();
         }
@@ -224,18 +224,6 @@ public class SimpleDiskCache {
                 failed = true;
                 throw e;
             }
-        }
-    }
-
-    public static class StringEntry {
-        private final String string;
-
-        public StringEntry(String string) {
-            this.string = string;
-        }
-
-        public String getString() {
-            return string;
         }
     }
 }
