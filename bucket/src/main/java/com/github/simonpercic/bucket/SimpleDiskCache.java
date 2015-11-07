@@ -34,7 +34,7 @@ public class SimpleDiskCache {
 
     private static final int VALUE_IDX = 0;
     private static final int METADATA_IDX = 1;
-    private static final List<File> usedDirs = new ArrayList<File>();
+    static final List<File> usedDirs = new ArrayList<File>();
 
     private com.jakewharton.disklrucache.DiskLruCache diskLruCache;
     private int mAppVersion;
