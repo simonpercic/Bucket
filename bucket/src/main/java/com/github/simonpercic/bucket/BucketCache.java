@@ -7,6 +7,7 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.concurrent.Callable;
 
 import rx.Observable;
 import rx.Observable.OnSubscribe;
@@ -82,74 +83,61 @@ public final class BucketCache {
         checkStringArgumentEmpty(key, "key");
         checkObjectArgumentNull(typeOfT, "typeOfT");
 
-        return Observable.create(new OnSubscribe<T>() {
-            @Override public void call(Subscriber<? super T> subscriber) {
-                try {
-                    T object = get(key, typeOfT);
-                    subscriber.onNext(object);
-                    subscriber.onCompleted();
-                } catch (Exception e) {
-                    subscriber.onError(e);
-                }
+        return createObservable(new Callable<T>() {
+            @Override public T call() throws Exception {
+                return get(key, typeOfT);
             }
-        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+        });
     }
 
     public Observable<Boolean> putRx(final String key, final Object object) {
         checkStringArgumentEmpty(key, "key");
         checkObjectArgumentNull(object, "object");
 
-        return Observable.create(new OnSubscribe<Boolean>() {
-            @Override public void call(Subscriber<? super Boolean> subscriber) {
-                try {
-                    put(key, object);
-                    subscriber.onNext(true);
-                    subscriber.onCompleted();
-                } catch (Exception e) {
-                    subscriber.onError(e);
-                }
+        return createObservable(new Callable<Boolean>() {
+            @Override public Boolean call() throws Exception {
+                put(key, object);
+                return true;
             }
-        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+        });
     }
 
     public Observable<Boolean> containsRx(final String key) {
         checkStringArgumentEmpty(key, "key");
 
-        return Observable.create(new OnSubscribe<Boolean>() {
-            @Override public void call(Subscriber<? super Boolean> subscriber) {
-                try {
-                    boolean contains = contains(key);
-                    subscriber.onNext(contains);
-                    subscriber.onCompleted();
-                } catch (Exception e) {
-                    subscriber.onError(e);
-                }
+        return createObservable(new Callable<Boolean>() {
+            @Override public Boolean call() throws Exception {
+                return contains(key);
             }
-        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+        });
     }
 
     public Observable<Boolean> removeRx(final String key) {
         checkStringArgumentEmpty(key, "key");
 
-        return Observable.create(new OnSubscribe<Boolean>() {
-            @Override public void call(Subscriber<? super Boolean> subscriber) {
-                try {
-                    remove(key);
-                    subscriber.onNext(true);
-                    subscriber.onCompleted();
-                } catch (Exception e) {
-                    subscriber.onError(e);
-                }
+        return createObservable(new Callable<Boolean>() {
+            @Override public Boolean call() throws Exception {
+                remove(key);
+                return true;
             }
-        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+        });
     }
 
     public Observable<Boolean> clearRx() {
-        return Observable.create(new OnSubscribe<Boolean>() {
-            @Override public void call(Subscriber<? super Boolean> subscriber) {
+        return createObservable(new Callable<Boolean>() {
+            @Override public Boolean call() throws Exception {
+                clear();
+                return true;
+            }
+        });
+    }
+
+    private <T> Observable<T> createObservable(final Callable<T> func) {
+        return Observable.create(new OnSubscribe<T>() {
+            @Override public void call(Subscriber<? super T> subscriber) {
                 try {
-                    clear();
-                    subscriber.onNext(true);
+                    T object = func.call();
+                    subscriber.onNext(object);
                     subscriber.onCompleted();
                 } catch (Exception e) {
                     subscriber.onError(e);
