@@ -1,5 +1,8 @@
 package com.github.simonpercic.bucket;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.jakewharton.disklrucache.DiskLruCache;
 import com.jakewharton.disklrucache.DiskLruCache.Editor;
 
@@ -56,7 +59,7 @@ final class SimpleDiskCache {
         return DiskLruCache.open(cacheDir, 1, 1, maxSizeBytes);
     }
 
-    String get(String key) throws IOException {
+    @Nullable String get(@NonNull String key) throws IOException {
         DiskLruCache.Snapshot snapshot = diskLruCache.get(toInternalKey(key));
         if (snapshot == null) {
             return null;
@@ -69,7 +72,7 @@ final class SimpleDiskCache {
         }
     }
 
-    void put(String key, String value) throws IOException {
+    void put(@NonNull String key, @NonNull String value) throws IOException {
         if (value.getBytes(ENCODING).length > diskLruCache.getMaxSize()) {
             throw new IOException("Object is larger than cache size");
         }
@@ -85,7 +88,7 @@ final class SimpleDiskCache {
         }
     }
 
-    boolean contains(String key) throws IOException {
+    boolean contains(@NonNull String key) throws IOException {
         DiskLruCache.Snapshot snapshot = diskLruCache.get(toInternalKey(key));
         if (snapshot == null) {
             return false;
@@ -95,7 +98,7 @@ final class SimpleDiskCache {
         return true;
     }
 
-    void remove(String key) throws IOException {
+    void remove(@NonNull String key) throws IOException {
         diskLruCache.remove(toInternalKey(key));
     }
 

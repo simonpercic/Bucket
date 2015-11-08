@@ -3,6 +3,9 @@ package com.github.simonpercic.bucket;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
+import com.github.simonpercic.bucket.model.GenericObject;
+import com.github.simonpercic.bucket.model.SimpleObject;
+import com.github.simonpercic.bucket.model.WrappedObject;
 import com.google.gson.reflect.TypeToken;
 
 import org.junit.After;
@@ -79,7 +82,7 @@ public class BucketCacheSyncTest {
         SimpleObject cached = bucket.get(key, SimpleObject.class);
         assertNotNull(cached);
 
-        assertEquals(value, cached.value);
+        assertEquals(value, cached.getValue());
     }
 
     @Test
@@ -93,8 +96,8 @@ public class BucketCacheSyncTest {
         SimpleObject simple = new SimpleObject(simpleValue);
 
         WrappedObject wrapped = new WrappedObject();
-        wrapped.object = simple;
-        wrapped.value = wrappedValue;
+        wrapped.setObject(simple);
+        wrapped.setValue(wrappedValue);
 
         bucket.put(key, wrapped);
 
@@ -103,10 +106,10 @@ public class BucketCacheSyncTest {
 
         WrappedObject cached = bucket.get(key, WrappedObject.class);
         assertNotNull(cached);
-        assertNotNull(cached.object);
+        assertNotNull(cached.getObject());
 
-        assertEquals(wrapped.value, cached.value);
-        assertEquals(wrapped.object.value, cached.object.value);
+        assertEquals(wrapped.getValue(), cached.getValue());
+        assertEquals(wrapped.getObject().getValue(), cached.getObject().getValue());
     }
 
     @Test
@@ -121,12 +124,12 @@ public class BucketCacheSyncTest {
         SimpleObject simple = new SimpleObject(simpleValue);
 
         WrappedObject wrapped = new WrappedObject();
-        wrapped.object = simple;
-        wrapped.value = wrappedValue;
+        wrapped.setObject(simple);
+        wrapped.setValue(wrappedValue);
 
         GenericObject<WrappedObject> generic = new GenericObject<>();
-        generic.object = wrapped;
-        generic.value = genericValue;
+        generic.setObject(wrapped);
+        generic.setValue(genericValue);
 
         bucket.put(key, generic);
 
@@ -138,12 +141,12 @@ public class BucketCacheSyncTest {
 
         GenericObject<WrappedObject> cached = bucket.get(key, type);
         assertNotNull(cached);
-        assertNotNull(cached.object);
-        assertNotNull(cached.object.object);
+        assertNotNull(cached.getObject());
+        assertNotNull(cached.getObject().getObject());
 
-        assertEquals(generic.value, cached.value);
-        assertEquals(wrapped.value, cached.object.value);
-        assertEquals(simple.value, cached.object.object.value);
+        assertEquals(generic.getValue(), cached.getValue());
+        assertEquals(wrapped.getValue(), cached.getObject().getValue());
+        assertEquals(simple.getValue(), cached.getObject().getObject().getValue());
     }
 
     @Test
@@ -171,8 +174,8 @@ public class BucketCacheSyncTest {
         assertEquals(2, cached.size());
         assertNotNull(cached.get(0));
         assertNotNull(cached.get(1));
-        assertEquals(value1, cached.get(0).value);
-        assertEquals(value2, cached.get(1).value);
+        assertEquals(value1, cached.get(0).getValue());
+        assertEquals(value2, cached.get(1).getValue());
     }
 
     @Test
@@ -278,7 +281,7 @@ public class BucketCacheSyncTest {
 
         SimpleObject cached2 = bucket.get(key2, SimpleObject.class);
         assertNotNull(cached2);
-        assertEquals(value2, cached2.value);
+        assertEquals(value2, cached2.getValue());
 
         String value1after = "TEST_VALUE_1_AFTER";
         bucket.put(key1, new SimpleObject(value1after));
@@ -287,26 +290,6 @@ public class BucketCacheSyncTest {
 
         SimpleObject cached1 = bucket.get(key1, SimpleObject.class);
         assertNotNull(cached1);
-        assertEquals(value1after, cached1.value);
-    }
-
-    private static class SimpleObject {
-        private String value;
-
-        public SimpleObject(String value) {
-            this.value = value;
-        }
-    }
-
-    private static class WrappedObject {
-        private SimpleObject object;
-
-        private String value;
-    }
-
-    private static class GenericObject<T> {
-        private T object;
-
-        private String value;
+        assertEquals(value1after, cached1.getValue());
     }
 }
