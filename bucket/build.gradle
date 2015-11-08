@@ -42,6 +42,8 @@ dependencies {
 
     compile 'com.jakewharton:disklrucache:2.0.2'
     compile 'com.google.code.gson:gson:2.4'
+    compile 'io.reactivex:rxjava:1.0.15'
+    compile 'io.reactivex:rxandroid:1.0.1'
 
     // Unit test dependencies
     testCompile 'junit:junit:4.11'

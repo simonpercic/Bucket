@@ -8,6 +8,13 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.lang.reflect.Type;
 
+import rx.Observable;
+import rx.Observable.OnSubscribe;
+import rx.Scheduler;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
@@ -18,10 +25,14 @@ public final class BucketCache {
 
     final SimpleDiskCache cache;
     final Gson gson;
+    final Scheduler subscribeScheduler;
+    final Scheduler observeScheduler;
 
-    private BucketCache(SimpleDiskCache cache, Gson gson) {
+    private BucketCache(SimpleDiskCache cache, Gson gson, Scheduler subscribeScheduler, Scheduler observeScheduler) {
         this.cache = cache;
         this.gson = gson;
+        this.subscribeScheduler = subscribeScheduler;
+        this.observeScheduler = observeScheduler;
     }
 
     // region synchronous methods
@@ -64,6 +75,90 @@ public final class BucketCache {
     }
 
     // endregion synchronous methods
+
+    // region Reactive methods
+
+    public <T> Observable<T> getRx(final String key, final Type typeOfT) {
+        checkStringArgumentEmpty(key, "key");
+        checkObjectArgumentNull(typeOfT, "typeOfT");
+
+        return Observable.create(new OnSubscribe<T>() {
+            @Override public void call(Subscriber<? super T> subscriber) {
+                try {
+                    T object = get(key, typeOfT);
+                    subscriber.onNext(object);
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+    }
+
+    public Observable<Boolean> putRx(final String key, final Object object) {
+        checkStringArgumentEmpty(key, "key");
+        checkObjectArgumentNull(object, "object");
+
+        return Observable.create(new OnSubscribe<Boolean>() {
+            @Override public void call(Subscriber<? super Boolean> subscriber) {
+                try {
+                    put(key, object);
+                    subscriber.onNext(true);
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+    }
+
+    public Observable<Boolean> containsRx(final String key) {
+        checkStringArgumentEmpty(key, "key");
+
+        return Observable.create(new OnSubscribe<Boolean>() {
+            @Override public void call(Subscriber<? super Boolean> subscriber) {
+                try {
+                    boolean contains = contains(key);
+                    subscriber.onNext(contains);
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+    }
+
+    public Observable<Boolean> removeRx(final String key) {
+        checkStringArgumentEmpty(key, "key");
+
+        return Observable.create(new OnSubscribe<Boolean>() {
+            @Override public void call(Subscriber<? super Boolean> subscriber) {
+                try {
+                    remove(key);
+                    subscriber.onNext(true);
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+    }
+
+    public Observable<Boolean> clearRx() {
+        return Observable.create(new OnSubscribe<Boolean>() {
+            @Override public void call(Subscriber<? super Boolean> subscriber) {
+                try {
+                    clear();
+                    subscriber.onNext(true);
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
+    }
+
+    // endregion Reactive methods
 
     // region private helpers
 
@@ -115,7 +210,10 @@ public final class BucketCache {
                 gson = new Gson();
             }
 
-            return new BucketCache(cache, gson);
+            Scheduler subscribeScheduler = Schedulers.io();
+            Scheduler observeScheduler = AndroidSchedulers.mainThread();
+
+            return new BucketCache(cache, gson, subscribeScheduler, observeScheduler);
         }
     }
 
