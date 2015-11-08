@@ -203,6 +203,17 @@ public class BucketCacheSyncTest {
     }
 
     @Test
+    public void testRemoveNoValue() throws Exception {
+        bucket = createCache();
+
+        String key = "TEST_KEY";
+
+        bucket.remove(key);
+
+        assertFalse(bucket.contains(key));
+    }
+
+    @Test
     public void testClearSingleValue() throws Exception {
         bucket = createCache();
 
