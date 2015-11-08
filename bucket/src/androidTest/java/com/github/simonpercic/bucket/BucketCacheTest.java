@@ -218,6 +218,121 @@ public class BucketCacheTest {
         assertEquals(value2, cached.get(1).value);
     }
 
+    @Test
+    public void testRemove() throws Exception {
+        bucket = createCache();
+
+        String key = "TEST_KEY";
+
+        String value = "TEST_VALUE";
+
+        SimpleObject simple = new SimpleObject(value);
+
+        bucket.put(key, simple);
+
+        boolean contains = bucket.contains(key);
+        assertTrue(contains);
+
+        bucket.remove(key);
+
+        contains = bucket.contains(key);
+        assertFalse(contains);
+
+        SimpleObject cached = bucket.get(key, SimpleObject.class);
+        assertNull(cached);
+    }
+
+    @Test
+    public void testClearSingleValue() throws Exception {
+        bucket = createCache();
+
+        String key = "TEST_KEY";
+
+        String value = "TEST_VALUE";
+
+        SimpleObject simple = new SimpleObject(value);
+
+        bucket.put(key, simple);
+
+        boolean contains = bucket.contains(key);
+        assertTrue(contains);
+
+        bucket.clear();
+
+        contains = bucket.contains(key);
+        assertFalse(contains);
+
+        SimpleObject cached = bucket.get(key, SimpleObject.class);
+        assertNull(cached);
+    }
+
+    @Test
+    public void testClearMultipleValues() throws Exception {
+        bucket = createCache();
+
+        String key1 = "TEST_KEY_1";
+        String key2 = "TEST_KEY_2";
+
+        String value1 = "TEST_VALUE_1";
+        String value2 = "TEST_VALUE_2";
+
+        SimpleObject simple1 = new SimpleObject(value1);
+        SimpleObject simple2 = new SimpleObject(value2);
+
+        bucket.put(key1, simple1);
+        bucket.put(key2, simple2);
+
+        boolean contains = bucket.contains(key1);
+        assertTrue(contains);
+
+        contains = bucket.contains(key2);
+        assertTrue(contains);
+
+        bucket.clear();
+
+        contains = bucket.contains(key1);
+        assertFalse(contains);
+
+        contains = bucket.contains(key2);
+        assertFalse(contains);
+
+        SimpleObject cached1 = bucket.get(key1, SimpleObject.class);
+        assertNull(cached1);
+
+        SimpleObject cached2 = bucket.get(key2, SimpleObject.class);
+        assertNull(cached2);
+    }
+
+    @Test
+    public void testClearWorksAfter() throws Exception {
+        bucket = createCache();
+
+        String key1 = "TEST_KEY_1";
+        String value1 = "TEST_VALUE_1";
+        bucket.put(key1, new SimpleObject(value1));
+
+        bucket.clear();
+
+        String key2 = "TEST_KEY_2";
+        String value2 = "TEST_VALUE_2";
+        bucket.put(key2, new SimpleObject(value2));
+
+        assertTrue(bucket.contains(key2));
+
+        SimpleObject cached2 = bucket.get(key2, SimpleObject.class);
+        assertNotNull(cached2);
+        assertEquals(value2, cached2.value);
+
+        String value1after = "TEST_VALUE_1_AFTER";
+        bucket.put(key1, new SimpleObject(value1after));
+
+        assertTrue(bucket.contains(key1));
+
+        SimpleObject cached1 = bucket.get(key1, SimpleObject.class);
+        assertNotNull(cached1);
+        assertEquals(value1after, cached1.value);
+    }
+
     private static class SimpleObject {
         private String value;
 
