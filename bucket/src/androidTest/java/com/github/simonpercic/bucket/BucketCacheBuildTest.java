@@ -12,6 +12,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import rx.Scheduler;
+import rx.schedulers.Schedulers;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -42,6 +45,8 @@ public class BucketCacheBuildTest {
         assertNotNull(bucket);
         assertNotNull(bucket.cache);
         assertNotNull(bucket.gson);
+        assertNotNull(bucket.subscribeScheduler);
+        assertNotNull(bucket.observeScheduler);
     }
 
     @Test
@@ -56,12 +61,55 @@ public class BucketCacheBuildTest {
     }
 
     @Test
+    public void testBuildGsonNull() throws Exception {
+        bucket = BucketCache.builder(context, 1024 * 1024).withGson(null).build();
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.gson);
+    }
+
+    @Test
+    public void testBuildSubscribeScheduler() throws Exception {
+        Scheduler scheduler = Schedulers.immediate();
+        bucket = BucketCache.builder(context, 1024 * 1024).withSubscribeScheduler(scheduler).build();
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.subscribeScheduler);
+        assertEquals(scheduler, bucket.subscribeScheduler);
+    }
+
+    @Test
+    public void testBuildSubscribeSchedulerNull() throws Exception {
+        bucket = BucketCache.builder(context, 1024 * 1024).withSubscribeScheduler(null).build();
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.subscribeScheduler);
+    }
+
+    @Test
+    public void testBuildObserveScheduler() throws Exception {
+        Scheduler scheduler = Schedulers.immediate();
+        bucket = BucketCache.builder(context, 1024 * 1024).withObserveScheduler(scheduler).build();
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.observeScheduler);
+        assertEquals(scheduler, bucket.observeScheduler);
+    }
+
+    @Test
+    public void testBuildObserveSchedulerNull() throws Exception {
+        bucket = BucketCache.builder(context, 1024 * 1024).withObserveScheduler(null).build();
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.observeScheduler);
+    }
+
+    @Test
     public void testBuildSize() throws Exception {
         int maxSizeBytes = 1024 * 1024;
         bucket = BucketCache.builder(context, maxSizeBytes).build();
 
         assertNotNull(bucket);
-        assertNotNull(bucket.gson);
         assertEquals(maxSizeBytes, bucket.cache.maxSizeBytes);
     }
 
@@ -72,7 +120,6 @@ public class BucketCacheBuildTest {
         File path = new File(context.getCacheDir() + BucketCache.CACHE_DIR);
 
         assertNotNull(bucket);
-        assertNotNull(bucket.gson);
         assertEquals(path, bucket.cache.cacheDir);
     }
 }

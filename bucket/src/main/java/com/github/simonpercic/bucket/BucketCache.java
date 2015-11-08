@@ -178,6 +178,8 @@ public final class BucketCache {
         private final long maxSizeBytes;
 
         private Gson gson;
+        private Scheduler subscribeScheduler;
+        private Scheduler observeScheduler;
 
         private Builder(Context context, long maxSizeBytes) {
             this.context = context;
@@ -186,6 +188,16 @@ public final class BucketCache {
 
         public Builder withGson(Gson gson) {
             this.gson = gson;
+            return this;
+        }
+
+        public Builder withSubscribeScheduler(Scheduler scheduler) {
+            this.subscribeScheduler = scheduler;
+            return this;
+        }
+
+        public Builder withObserveScheduler(Scheduler scheduler) {
+            this.observeScheduler = scheduler;
             return this;
         }
 
@@ -198,8 +210,13 @@ public final class BucketCache {
                 gson = new Gson();
             }
 
-            Scheduler subscribeScheduler = Schedulers.io();
-            Scheduler observeScheduler = AndroidSchedulers.mainThread();
+            if (subscribeScheduler == null) {
+                subscribeScheduler = Schedulers.io();
+            }
+
+            if (observeScheduler == null) {
+                observeScheduler = AndroidSchedulers.mainThread();
+            }
 
             return new BucketCache(cache, gson, subscribeScheduler, observeScheduler);
         }

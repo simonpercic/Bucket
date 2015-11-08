@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import rx.Observable;
 import rx.Observer;
 import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -44,7 +45,10 @@ public class BucketCacheRxTest {
     }
 
     private BucketCache createCache() throws IOException {
-        return BucketCache.builder(context, 1024 * 1024).build();
+        return BucketCache.builder(context, 1024 * 1024)
+                .withSubscribeScheduler(Schedulers.immediate())
+                .withObserveScheduler(Schedulers.immediate())
+                .build();
     }
 
     @Test
