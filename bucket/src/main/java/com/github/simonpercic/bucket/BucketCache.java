@@ -10,7 +10,7 @@ import java.lang.reflect.Type;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-public class BucketCache {
+public final class BucketCache {
 
     static final String CACHE_DIR = "/Bucket";
 
@@ -63,7 +63,7 @@ public class BucketCache {
 
     // region Builder
 
-    public static class Builder {
+    public static final class Builder {
 
         private final Context context;
         private final long maxSizeBytes;

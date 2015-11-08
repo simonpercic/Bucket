@@ -15,11 +15,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Adapted from https://github.com/fhucho/simple-disk-cache
+ * Adapted from https://github.com/fhucho/simple-disk-cache.
  * License Apache 2.0
  */
-class SimpleDiskCache {
+final class SimpleDiskCache {
 
+    private static final String ENCODING = "UTF-8";
     private static final int VALUE_IDX = 0;
     private static final Set<String> USED_DIRS = new HashSet<>();
 
@@ -38,10 +39,8 @@ class SimpleDiskCache {
             throw new IllegalStateException(String.format("Cache directory %s was used before.", cachePath));
         }
 
-        if (!cacheDir.exists()) {
-            if (!cacheDir.mkdir()) {
-                throw new IOException("Failed to create cache directory!");
-            }
+        if (!cacheDir.exists() && !cacheDir.mkdir()) {
+            throw new IOException("Failed to create cache directory!");
         }
 
         USED_DIRS.add(cachePath);
@@ -71,14 +70,14 @@ class SimpleDiskCache {
     }
 
     void put(String key, String value) throws IOException {
-        if (value.getBytes().length > diskLruCache.getMaxSize()) {
-            throw new IOException("");
+        if (value.getBytes(ENCODING).length > diskLruCache.getMaxSize()) {
+            throw new IOException("Object is larger than cache size");
         }
 
         OutputStream cos = null;
         try {
             cos = openStream(key);
-            cos.write(value.getBytes());
+            cos.write(value.getBytes(ENCODING));
         } finally {
             if (cos != null) {
                 cos.close();
@@ -126,7 +125,7 @@ class SimpleDiskCache {
     private static String toInternalKey(String key) {
         try {
             MessageDigest m = MessageDigest.getInstance("MD5");
-            m.update(key.getBytes("UTF-8"));
+            m.update(key.getBytes(ENCODING));
             byte[] digest = m.digest();
             BigInteger bigInt = new BigInteger(1, digest);
             return bigInt.toString(16);

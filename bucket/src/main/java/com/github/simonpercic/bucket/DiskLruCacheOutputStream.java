@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Adapted from https://github.com/fhucho/simple-disk-cache
+ * Adapted from https://github.com/fhucho/simple-disk-cache.
  * License Apache 2.0
  */
 class DiskLruCacheOutputStream extends FilterOutputStream {
