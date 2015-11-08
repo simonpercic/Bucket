@@ -1,12 +1,10 @@
 package com.github.simonpercic.bucket;
 
-import android.support.annotation.NonNull;
-
 import com.jakewharton.disklrucache.DiskLruCache;
+import com.jakewharton.disklrucache.DiskLruCache.Editor;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -20,7 +18,7 @@ import java.util.Set;
  * Adapted from https://github.com/fhucho/simple-disk-cache
  * License Apache 2.0
  */
-public class SimpleDiskCache {
+class SimpleDiskCache {
 
     private static final int VALUE_IDX = 0;
     private static final Set<String> USED_DIRS = new HashSet<>();
@@ -51,7 +49,7 @@ public class SimpleDiskCache {
         diskLruCache = createDiskLruCache(cacheDir, maxSizeBytes);
     }
 
-    public static synchronized SimpleDiskCache create(String path, long maxSizeBytes) throws IOException {
+    static synchronized SimpleDiskCache create(String path, long maxSizeBytes) throws IOException {
         return new SimpleDiskCache(path, maxSizeBytes);
     }
 
@@ -59,19 +57,11 @@ public class SimpleDiskCache {
         return DiskLruCache.open(cacheDir, 1, 1, maxSizeBytes);
     }
 
-    public void clear() throws IOException {
-        diskLruCache.delete();
-        diskLruCache = createDiskLruCache(cacheDir, maxSizeBytes);
-    }
-
-    void destroy() throws IOException {
-        diskLruCache.delete();
-        USED_DIRS.remove(cacheDir.getPath());
-    }
-
-    public String getString(String key) throws IOException {
+    String get(String key) throws IOException {
         DiskLruCache.Snapshot snapshot = diskLruCache.get(toInternalKey(key));
-        if (snapshot == null) return null;
+        if (snapshot == null) {
+            return null;
+        }
 
         try {
             return snapshot.getString(VALUE_IDX);
@@ -80,7 +70,7 @@ public class SimpleDiskCache {
         }
     }
 
-    public void put(String key, String value) throws IOException {
+    void put(String key, String value) throws IOException {
         if (value.getBytes().length > diskLruCache.getMaxSize()) {
             throw new IOException("");
         }
@@ -90,115 +80,60 @@ public class SimpleDiskCache {
             cos = openStream(key);
             cos.write(value.getBytes());
         } finally {
-            if (cos != null) cos.close();
+            if (cos != null) {
+                cos.close();
+            }
         }
     }
 
-    public boolean contains(String key) throws IOException {
+    boolean contains(String key) throws IOException {
         DiskLruCache.Snapshot snapshot = diskLruCache.get(toInternalKey(key));
-        if (snapshot == null) return false;
+        if (snapshot == null) {
+            return false;
+        }
 
         snapshot.close();
         return true;
     }
 
+    void remove(String key) throws IOException {
+        diskLruCache.remove(toInternalKey(key));
+    }
+
+    void clear() throws IOException {
+        diskLruCache.delete();
+        diskLruCache = createDiskLruCache(cacheDir, maxSizeBytes);
+    }
+
+    void destroy() throws IOException {
+        diskLruCache.delete();
+        USED_DIRS.remove(cacheDir.getPath());
+    }
+
+    // region private helpers
+
     private OutputStream openStream(String key) throws IOException {
-        DiskLruCache.Editor editor = diskLruCache.edit(toInternalKey(key));
+        Editor editor = diskLruCache.edit(toInternalKey(key));
         try {
             BufferedOutputStream bos = new BufferedOutputStream(editor.newOutputStream(VALUE_IDX));
-            return new CacheOutputStream(bos, editor);
+            return new DiskLruCacheOutputStream(bos, editor);
         } catch (IOException e) {
             editor.abort();
             throw e;
         }
     }
 
-    public void delete(String key) throws IOException {
-        diskLruCache.remove(toInternalKey(key));
-    }
-
-    private String toInternalKey(String key) {
-        return md5(key);
-    }
-
-    private String md5(String s) {
+    private static String toInternalKey(String key) {
         try {
             MessageDigest m = MessageDigest.getInstance("MD5");
-            m.update(s.getBytes("UTF-8"));
+            m.update(key.getBytes("UTF-8"));
             byte[] digest = m.digest();
             BigInteger bigInt = new BigInteger(1, digest);
             return bigInt.toString(16);
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            throw new AssertionError();
+            throw new RuntimeException(e);
         }
     }
 
-    private class CacheOutputStream extends FilterOutputStream {
-
-        private final DiskLruCache.Editor editor;
-        private boolean failed = false;
-
-        private CacheOutputStream(OutputStream os, DiskLruCache.Editor editor) {
-            super(os);
-            this.editor = editor;
-        }
-
-        @Override
-        public void close() throws IOException {
-            IOException closeException = null;
-            try {
-                super.close();
-            } catch (IOException e) {
-                closeException = e;
-            }
-
-            if (failed) {
-                editor.abort();
-            } else {
-                editor.commit();
-            }
-
-            if (closeException != null) throw closeException;
-        }
-
-        @Override
-        public void flush() throws IOException {
-            try {
-                super.flush();
-            } catch (IOException e) {
-                failed = true;
-                throw e;
-            }
-        }
-
-        @Override
-        public void write(int oneByte) throws IOException {
-            try {
-                super.write(oneByte);
-            } catch (IOException e) {
-                failed = true;
-                throw e;
-            }
-        }
-
-        @Override
-        public void write(@NonNull byte[] buffer) throws IOException {
-            try {
-                super.write(buffer);
-            } catch (IOException e) {
-                failed = true;
-                throw e;
-            }
-        }
-
-        @Override
-        public void write(@NonNull byte[] buffer, int offset, int length) throws IOException {
-            try {
-                super.write(buffer, offset, length);
-            } catch (IOException e) {
-                failed = true;
-                throw e;
-            }
-        }
-    }
+    // endregion private helpers
 }

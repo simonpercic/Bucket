@@ -23,7 +23,7 @@ public class BucketCache {
     // region synchronous methods
 
     public <T> T get(String key, Type typeOfT) throws IOException {
-        String json = cache.getString(key);
+        String json = cache.get(key);
 
         if (json != null && json.length() > 0) {
             return gson.fromJson(json, typeOfT);
@@ -39,6 +39,14 @@ public class BucketCache {
 
     public boolean contains(String key) throws IOException {
         return cache.contains(key);
+    }
+
+    public void remove(String key) throws IOException {
+        cache.remove(key);
+    }
+
+    public void clear() throws IOException {
+        cache.clear();
     }
 
     // endregion synchronous methods
