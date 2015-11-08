@@ -25,8 +25,8 @@ class SimpleDiskCache {
 
     private DiskLruCache diskLruCache;
 
-    private final File cacheDir;
-    private final long maxSizeBytes;
+    final File cacheDir;
+    final long maxSizeBytes;
 
     private SimpleDiskCache(String path, long maxSizeBytes) throws IOException {
         this.cacheDir = new File(path);

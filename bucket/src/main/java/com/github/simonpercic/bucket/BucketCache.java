@@ -12,6 +12,8 @@ import java.lang.reflect.Type;
  */
 public class BucketCache {
 
+    static final String CACHE_DIR = "/Bucket";
+
     final SimpleDiskCache cache;
     final Gson gson;
 
@@ -79,7 +81,7 @@ public class BucketCache {
         }
 
         public synchronized BucketCache build() throws IOException {
-            String cachePath = context.getCacheDir() + "/BucketCache";
+            String cachePath = context.getCacheDir() + CACHE_DIR;
 
             SimpleDiskCache cache = SimpleDiskCache.create(cachePath, maxSizeBytes);
 

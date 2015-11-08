@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -63,6 +64,27 @@ public class BucketCacheTest {
         assertNotNull(bucket);
         assertNotNull(bucket.gson);
         assertEquals(gson, bucket.gson);
+    }
+
+    @Test
+    public void testBuildSize() throws Exception {
+        int maxSizeBytes = 1024 * 1024;
+        bucket = BucketCache.builder(context, maxSizeBytes).build();
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.gson);
+        assertEquals(maxSizeBytes, bucket.cache.maxSizeBytes);
+    }
+
+    @Test
+    public void testBuildPath() throws Exception {
+        bucket = BucketCache.builder(context, 1024 * 1024).build();
+
+        File path = new File(context.getCacheDir() + BucketCache.CACHE_DIR);
+
+        assertNotNull(bucket);
+        assertNotNull(bucket.gson);
+        assertEquals(path, bucket.cache.cacheDir);
     }
 
     @Test
