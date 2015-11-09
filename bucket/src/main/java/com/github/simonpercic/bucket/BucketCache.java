@@ -23,7 +23,6 @@ import rx.schedulers.Schedulers;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public final class BucketCache {
 
     static final String CACHE_DIR = "/Bucket";
@@ -43,8 +42,7 @@ public final class BucketCache {
     // region synchronous methods
 
     public <T> T get(String key, Type typeOfT) throws IOException {
-        checkStringArgumentEmpty(key, "key");
-        checkObjectArgumentNull(typeOfT, "typeOfT");
+        checkGetArgs(key, typeOfT);
 
         String json = cache.get(key);
 
@@ -56,21 +54,20 @@ public final class BucketCache {
     }
 
     public void put(String key, Object object) throws IOException {
-        checkStringArgumentEmpty(key, "key");
-        checkObjectArgumentNull(object, "object");
+        checkPutArgs(key, object);
 
         String json = gson.toJson(object);
         cache.put(key, json);
     }
 
     public boolean contains(String key) throws IOException {
-        checkStringArgumentEmpty(key, "key");
+        checkKeyArg(key);
 
         return cache.contains(key);
     }
 
     public void remove(String key) throws IOException {
-        checkStringArgumentEmpty(key, "key");
+        checkKeyArg(key);
 
         cache.remove(key);
     }
@@ -84,28 +81,26 @@ public final class BucketCache {
     // region asynchronous methods
 
     public <T> void getAsync(String key, Type typeOfT, final BucketGetCallback<T> callback) {
-        checkStringArgumentEmpty(key, "key");
-        checkObjectArgumentNull(typeOfT, "typeOfT");
+        checkGetArgs(key, typeOfT);
 
         Observable<T> get = getRx(key, typeOfT);
         doAsync(get, callback);
     }
 
     public void putAsync(String key, Object object, final BucketCallback callback) {
-        checkStringArgumentEmpty(key, "key");
-        checkObjectArgumentNull(object, "object");
+        checkPutArgs(key, object);
 
         doAsync(putRx(key, object), callback);
     }
 
     public void containsAsync(String key, final BucketGetCallback<Boolean> callback) {
-        checkStringArgumentEmpty(key, "key");
+        checkKeyArg(key);
 
         doAsync(containsRx(key), callback);
     }
 
     public void removeAsync(String key, final BucketCallback callback) {
-        checkStringArgumentEmpty(key, "key");
+        checkKeyArg(key);
 
         doAsync(removeRx(key), callback);
     }
@@ -149,8 +144,7 @@ public final class BucketCache {
     // region Reactive methods
 
     public <T> Observable<T> getRx(final String key, final Type typeOfT) {
-        checkStringArgumentEmpty(key, "key");
-        checkObjectArgumentNull(typeOfT, "typeOfT");
+        checkGetArgs(key, typeOfT);
 
         return createObservable(new Callable<T>() {
             @Override public T call() throws Exception {
@@ -160,8 +154,7 @@ public final class BucketCache {
     }
 
     public Observable<Boolean> putRx(final String key, final Object object) {
-        checkStringArgumentEmpty(key, "key");
-        checkObjectArgumentNull(object, "object");
+        checkPutArgs(key, object);
 
         return createObservable(new Callable<Boolean>() {
             @Override public Boolean call() throws Exception {
@@ -172,7 +165,7 @@ public final class BucketCache {
     }
 
     public Observable<Boolean> containsRx(final String key) {
-        checkStringArgumentEmpty(key, "key");
+        checkKeyArg(key);
 
         return createObservable(new Callable<Boolean>() {
             @Override public Boolean call() throws Exception {
@@ -182,7 +175,7 @@ public final class BucketCache {
     }
 
     public Observable<Boolean> removeRx(final String key) {
-        checkStringArgumentEmpty(key, "key");
+        checkKeyArg(key);
 
         return createObservable(new Callable<Boolean>() {
             @Override public Boolean call() throws Exception {
@@ -217,7 +210,21 @@ public final class BucketCache {
 
     // endregion Reactive methods
 
-    // region private helpers
+    // region args checks
+
+    private static void checkGetArgs(String key, Type typeOfT) {
+        checkStringArgumentEmpty(key, "key");
+        checkObjectArgumentNull(typeOfT, "typeOfT");
+    }
+
+    private static void checkPutArgs(String key, Object object) {
+        checkStringArgumentEmpty(key, "key");
+        checkObjectArgumentNull(object, "object");
+    }
+
+    private static void checkKeyArg(String key) {
+        checkStringArgumentEmpty(key, "key");
+    }
 
     private static void checkStringArgumentEmpty(String value, String name) {
         if (StringUtils.isEmpty(value)) {
@@ -231,7 +238,7 @@ public final class BucketCache {
         }
     }
 
-    // endregion private helpers
+    // endregion args checks
 
     // region Builder
 
