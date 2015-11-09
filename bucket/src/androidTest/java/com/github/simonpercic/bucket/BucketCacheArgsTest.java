@@ -40,6 +40,8 @@ public class BucketCacheArgsTest {
         return BucketCache.builder(context, 1024 * 1024).build();
     }
 
+    // region synchronous methods
+
     @Test
     public void testGetNullKey() throws Exception {
         bucket = createCache();
@@ -117,4 +119,170 @@ public class BucketCacheArgsTest {
             assertEquals("key is null or empty", e.getMessage());
         }
     }
+
+    // endregion synchronous methods
+
+    // region asynchronous methods
+
+    @Test
+    public void testGetAsyncNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.getAsync(null, SimpleObject.class, null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetAsyncNullType() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.getAsync("TEST_KEY", null, null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("typeOfT is null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testPutAsyncNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.putAsync(null, new SimpleObject("TEST_VALUE"), null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testPutAsyncNullObject() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.putAsync("TEST_KEY", null, null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("object is null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testContainsAsyncNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.containsAsync(null, null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testRemoveAsyncNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.removeAsync(null, null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    // endregion asynchronous methods
+
+    // region Reactive methods
+
+    @Test
+    public void testGetRxKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.getRx(null, SimpleObject.class);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetRxNullType() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.getRx("TEST_KEY", null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("typeOfT is null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testPutRxNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.putRx(null, new SimpleObject("TEST_VALUE"));
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testPutRxNullObject() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.putRx("TEST_KEY", null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("object is null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testContainsRxNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.containsRx(null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testRemoveRxNullKey() throws Exception {
+        bucket = createCache();
+
+        try {
+            bucket.removeRx(null);
+            fail("Should throw an exception");
+        } catch (Exception e) {
+            assertThat(e, new InstanceOf(IllegalArgumentException.class));
+            assertEquals("key is null or empty", e.getMessage());
+        }
+    }
+
+    // endregion Reactive methods
 }
