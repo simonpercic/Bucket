@@ -10,12 +10,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 import rx.Observable;
-import rx.Observer;
 import rx.functions.Action1;
+import rx.observers.TestSubscriber;
 import rx.schedulers.Schedulers;
 
 import static junit.framework.Assert.assertFalse;
@@ -62,7 +61,6 @@ public class BucketCacheRxTest {
 
         testObservable(bucket.<SimpleObject>getRx(key, SimpleObject.class), new Action1<SimpleObject>() {
             @Override public void call(SimpleObject simpleObject) {
-                assertNotNull(simpleObject);
                 assertEquals(value, simpleObject.getValue());
             }
         });
@@ -77,7 +75,6 @@ public class BucketCacheRxTest {
 
         testObservable(bucket.<Boolean>putRx(key, new SimpleObject(value)), new Action1<Boolean>() {
             @Override public void call(Boolean aBoolean) {
-                assertNotNull(aBoolean);
                 assertTrue(aBoolean);
 
                 try {
@@ -100,7 +97,6 @@ public class BucketCacheRxTest {
 
         testObservable(bucket.<Boolean>containsRx(key), new Action1<Boolean>() {
             @Override public void call(Boolean aBoolean) {
-                assertNotNull(aBoolean);
                 assertTrue(aBoolean);
             }
         });
@@ -114,7 +110,6 @@ public class BucketCacheRxTest {
 
         testObservable(bucket.<Boolean>containsRx(key), new Action1<Boolean>() {
             @Override public void call(Boolean aBoolean) {
-                assertNotNull(aBoolean);
                 assertFalse(aBoolean);
             }
         });
@@ -131,7 +126,6 @@ public class BucketCacheRxTest {
 
         testObservable(bucket.<Boolean>removeRx(key), new Action1<Boolean>() {
             @Override public void call(Boolean aBoolean) {
-                assertNotNull(aBoolean);
                 assertTrue(aBoolean);
 
                 try {
@@ -154,7 +148,6 @@ public class BucketCacheRxTest {
 
         testObservable(bucket.<Boolean>clearRx(), new Action1<Boolean>() {
             @Override public void call(Boolean aBoolean) {
-                assertNotNull(aBoolean);
                 assertTrue(aBoolean);
 
                 try {
@@ -166,36 +159,18 @@ public class BucketCacheRxTest {
         });
     }
 
-    private <T> void testObservable(Observable<T> observable, final Action1<T> assertAction)
-            throws InterruptedException {
+    private static <T> void testObservable(Observable<T> observable, Action1<T> assertAction) {
+        TestSubscriber<T> testSubscriber = new TestSubscriber<>();
+        observable.subscribe(testSubscriber);
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
 
-        observable.subscribe(new TestObserver<T>(latch) {
-            @Override public void onNext(T t) {
-                assertAction.call(t);
-            }
-        });
+        List<T> onNextEvents = testSubscriber.getOnNextEvents();
+        assertEquals(1, onNextEvents.size());
 
-        if (!latch.await(400, TimeUnit.MILLISECONDS)) {
-            fail();
-        }
-    }
-
-    private static abstract class TestObserver<T> implements Observer<T> {
-
-        private final CountDownLatch countDownLatch;
-
-        public TestObserver(CountDownLatch countDownLatch) {
-            this.countDownLatch = countDownLatch;
-        }
-
-        @Override public void onCompleted() {
-            countDownLatch.countDown();
-        }
-
-        @Override public void onError(Throwable e) {
-            fail(e.getMessage());
-        }
+        T value = onNextEvents.get(0);
+        assertNotNull(value);
+        assertAction.call(value);
     }
 }
