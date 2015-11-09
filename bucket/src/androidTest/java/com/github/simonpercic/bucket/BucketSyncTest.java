@@ -26,10 +26,10 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-public class BucketCacheSyncTest {
+public class BucketSyncTest {
 
     Context context;
-    BucketCache bucket;
+    Bucket bucket;
 
     @Before
     public void setUp() {
@@ -43,8 +43,8 @@ public class BucketCacheSyncTest {
         }
     }
 
-    private BucketCache createCache() throws IOException {
-        return BucketCache.builder(context, 1024 * 1024).build();
+    private Bucket createCache() throws IOException {
+        return Bucket.builder(context, 1024 * 1024).build();
     }
 
     @Test

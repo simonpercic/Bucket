@@ -21,10 +21,10 @@ import static org.junit.Assert.assertNotNull;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-public class BucketCacheBuildTest {
+public class BucketBuildTest {
 
     Context context;
-    BucketCache bucket;
+    Bucket bucket;
 
     @Before
     public void setUp() {
@@ -40,7 +40,7 @@ public class BucketCacheBuildTest {
 
     @Test
     public void testBuildNoException() throws Exception {
-        bucket = BucketCache.builder(context, 1024 * 1024).build();
+        bucket = Bucket.builder(context, 1024 * 1024).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.cache);
@@ -53,7 +53,7 @@ public class BucketCacheBuildTest {
     public void testBuildGson() throws Exception {
         Gson gson = new Gson();
 
-        bucket = BucketCache.builder(context, 1024 * 1024).withGson(gson).build();
+        bucket = Bucket.builder(context, 1024 * 1024).withGson(gson).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.gson);
@@ -62,7 +62,7 @@ public class BucketCacheBuildTest {
 
     @Test
     public void testBuildGsonNull() throws Exception {
-        bucket = BucketCache.builder(context, 1024 * 1024).withGson(null).build();
+        bucket = Bucket.builder(context, 1024 * 1024).withGson(null).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.gson);
@@ -71,7 +71,7 @@ public class BucketCacheBuildTest {
     @Test
     public void testBuildSubscribeScheduler() throws Exception {
         Scheduler scheduler = Schedulers.immediate();
-        bucket = BucketCache.builder(context, 1024 * 1024).withSubscribeScheduler(scheduler).build();
+        bucket = Bucket.builder(context, 1024 * 1024).withSubscribeScheduler(scheduler).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.subscribeScheduler);
@@ -80,7 +80,7 @@ public class BucketCacheBuildTest {
 
     @Test
     public void testBuildSubscribeSchedulerNull() throws Exception {
-        bucket = BucketCache.builder(context, 1024 * 1024).withSubscribeScheduler(null).build();
+        bucket = Bucket.builder(context, 1024 * 1024).withSubscribeScheduler(null).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.subscribeScheduler);
@@ -89,7 +89,7 @@ public class BucketCacheBuildTest {
     @Test
     public void testBuildObserveScheduler() throws Exception {
         Scheduler scheduler = Schedulers.immediate();
-        bucket = BucketCache.builder(context, 1024 * 1024).withObserveScheduler(scheduler).build();
+        bucket = Bucket.builder(context, 1024 * 1024).withObserveScheduler(scheduler).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.observeScheduler);
@@ -98,7 +98,7 @@ public class BucketCacheBuildTest {
 
     @Test
     public void testBuildObserveSchedulerNull() throws Exception {
-        bucket = BucketCache.builder(context, 1024 * 1024).withObserveScheduler(null).build();
+        bucket = Bucket.builder(context, 1024 * 1024).withObserveScheduler(null).build();
 
         assertNotNull(bucket);
         assertNotNull(bucket.observeScheduler);
@@ -107,7 +107,7 @@ public class BucketCacheBuildTest {
     @Test
     public void testBuildSize() throws Exception {
         int maxSizeBytes = 1024 * 1024;
-        bucket = BucketCache.builder(context, maxSizeBytes).build();
+        bucket = Bucket.builder(context, maxSizeBytes).build();
 
         assertNotNull(bucket);
         assertEquals(maxSizeBytes, bucket.cache.maxSizeBytes);
@@ -115,9 +115,9 @@ public class BucketCacheBuildTest {
 
     @Test
     public void testBuildPath() throws Exception {
-        bucket = BucketCache.builder(context, 1024 * 1024).build();
+        bucket = Bucket.builder(context, 1024 * 1024).build();
 
-        File path = new File(context.getCacheDir() + BucketCache.CACHE_DIR);
+        File path = new File(context.getCacheDir() + Bucket.CACHE_DIR);
 
         assertNotNull(bucket);
         assertEquals(path, bucket.cache.cacheDir);

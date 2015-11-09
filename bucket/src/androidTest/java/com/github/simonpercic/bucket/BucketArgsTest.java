@@ -19,10 +19,10 @@ import static org.junit.Assert.fail;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-public class BucketCacheArgsTest {
+public class BucketArgsTest {
 
     Context context;
-    BucketCache bucket;
+    Bucket bucket;
 
     @Before
     public void setUp() {
@@ -36,8 +36,8 @@ public class BucketCacheArgsTest {
         }
     }
 
-    private BucketCache createCache() throws IOException {
-        return BucketCache.builder(context, 1024 * 1024).build();
+    private Bucket createCache() throws IOException {
+        return Bucket.builder(context, 1024 * 1024).build();
     }
 
     // region synchronous methods

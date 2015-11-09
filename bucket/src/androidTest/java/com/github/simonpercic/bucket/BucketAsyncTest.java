@@ -25,10 +25,10 @@ import static org.junit.Assert.assertNotNull;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-public class BucketCacheAsyncTest {
+public class BucketAsyncTest {
 
     Context context;
-    BucketCache bucket;
+    Bucket bucket;
 
     @Before
     public void setUp() {
@@ -42,8 +42,8 @@ public class BucketCacheAsyncTest {
         }
     }
 
-    private BucketCache createCache() throws IOException {
-        return BucketCache.builder(context, 1024 * 1024)
+    private Bucket createCache() throws IOException {
+        return Bucket.builder(context, 1024 * 1024)
                 .withSubscribeScheduler(Schedulers.immediate())
                 .withObserveScheduler(Schedulers.immediate())
                 .build();

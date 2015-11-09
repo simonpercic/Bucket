@@ -23,7 +23,7 @@ import rx.schedulers.Schedulers;
 /**
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
-public final class BucketCache {
+public final class Bucket {
 
     static final String CACHE_DIR = "/Bucket";
 
@@ -32,7 +32,7 @@ public final class BucketCache {
     final Scheduler subscribeScheduler;
     final Scheduler observeScheduler;
 
-    private BucketCache(SimpleDiskCache cache, Gson gson, Scheduler subscribeScheduler, Scheduler observeScheduler) {
+    private Bucket(SimpleDiskCache cache, Gson gson, Scheduler subscribeScheduler, Scheduler observeScheduler) {
         this.cache = cache;
         this.gson = gson;
         this.subscribeScheduler = subscribeScheduler;
@@ -277,7 +277,7 @@ public final class BucketCache {
             return this;
         }
 
-        public synchronized BucketCache build() throws IOException {
+        public synchronized Bucket build() throws IOException {
             String cachePath = context.getCacheDir() + CACHE_DIR;
 
             SimpleDiskCache cache = SimpleDiskCache.create(cachePath, maxSizeBytes);
@@ -294,7 +294,7 @@ public final class BucketCache {
                 observeScheduler = AndroidSchedulers.mainThread();
             }
 
-            return new BucketCache(cache, gson, subscribeScheduler, observeScheduler);
+            return new Bucket(cache, gson, subscribeScheduler, observeScheduler);
         }
     }
 
