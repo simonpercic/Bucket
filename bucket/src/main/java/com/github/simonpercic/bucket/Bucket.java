@@ -1,6 +1,7 @@
 package com.github.simonpercic.bucket;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.github.simonpercic.bucket.callback.BucketCallback;
 import com.github.simonpercic.bucket.callback.BucketFailureCallback;
@@ -21,6 +22,16 @@ import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
+ * Bucket - a disk cache.
+ * Supported operations:
+ * - get,
+ * - put,
+ * - contains,
+ * - remove and
+ * - clear
+ * Contains synchronous, asynchronous and RxJava methods.
+ * Create an instance through the Builder, obtained by calling {@link #builder(Context, long) builder}
+ *
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
 public final class Bucket {
@@ -41,6 +52,16 @@ public final class Bucket {
 
     // region synchronous methods
 
+    /**
+     * Get from cache.
+     *
+     * @param key key
+     * @param typeOfT type of cache value
+     * @param <T> T of cache value
+     * @return cache value
+     * @throws IOException
+     */
+    @Nullable
     public <T> T get(String key, Type typeOfT) throws IOException {
         checkGetArgs(key, typeOfT);
 
@@ -53,6 +74,13 @@ public final class Bucket {
         return null;
     }
 
+    /**
+     * Put value to cache.
+     *
+     * @param key key
+     * @param object object
+     * @throws IOException
+     */
     public void put(String key, Object object) throws IOException {
         checkPutArgs(key, object);
 
@@ -60,18 +88,36 @@ public final class Bucket {
         cache.put(key, json);
     }
 
+    /**
+     * Cache contains key.
+     *
+     * @param key key
+     * @return <tt>true</tt> if cache contains key, <tt>false</tt> otherwise
+     * @throws IOException
+     */
     public boolean contains(String key) throws IOException {
         checkKeyArg(key);
 
         return cache.contains(key);
     }
 
+    /**
+     * Remove cache value.
+     *
+     * @param key key
+     * @throws IOException
+     */
     public void remove(String key) throws IOException {
         checkKeyArg(key);
 
         cache.remove(key);
     }
 
+    /**
+     * Clear all cache values.
+     *
+     * @throws IOException
+     */
     public void clear() throws IOException {
         cache.clear();
     }
@@ -80,6 +126,14 @@ public final class Bucket {
 
     // region asynchronous methods
 
+    /**
+     * Get from cache - async, using a callback.
+     *
+     * @param key key
+     * @param typeOfT type of cache value
+     * @param callback callback that will be invoked to return the value
+     * @param <T> T of cache value
+     */
     public <T> void getAsync(String key, Type typeOfT, final BucketGetCallback<T> callback) {
         checkGetArgs(key, typeOfT);
 
@@ -87,24 +141,48 @@ public final class Bucket {
         doAsync(get, callback);
     }
 
+    /**
+     * Put value to cache - async, using a callback.
+     *
+     * @param key key
+     * @param object object
+     * @param callback callback that will be invoked to report status
+     */
     public void putAsync(String key, Object object, final BucketCallback callback) {
         checkPutArgs(key, object);
 
         doAsync(putRx(key, object), callback);
     }
 
+    /**
+     * Cache contains key - async, using a callback.
+     *
+     * @param key key
+     * @param callback callback that will be invoked to report contains state
+     */
     public void containsAsync(String key, final BucketGetCallback<Boolean> callback) {
         checkKeyArg(key);
 
         doAsync(containsRx(key), callback);
     }
 
+    /**
+     * Remove cache value - async, using a callback.
+     *
+     * @param key key
+     * @param callback callback that will be invoked to report status
+     */
     public void removeAsync(String key, final BucketCallback callback) {
         checkKeyArg(key);
 
         doAsync(removeRx(key), callback);
     }
 
+    /**
+     * Clear all cache values - async, using a callback.
+     *
+     * @param callback callback that will be invoked to report status
+     */
     public void clearAsync(final BucketCallback callback) {
         doAsync(clearRx(), callback);
     }
@@ -143,6 +221,14 @@ public final class Bucket {
 
     // region Reactive methods
 
+    /**
+     * Get from cache - reactive, using an Observable.
+     *
+     * @param key key
+     * @param typeOfT type of cache value
+     * @param <T> T of cache value
+     * @return Observable that emits the cache value
+     */
     public <T> Observable<T> getRx(final String key, final Type typeOfT) {
         checkGetArgs(key, typeOfT);
 
@@ -153,6 +239,13 @@ public final class Bucket {
         });
     }
 
+    /**
+     * Put value to cache - reactive, using an Observable.
+     *
+     * @param key key
+     * @param object object
+     * @return Observable that emits <tt>true</tt> if successful, <tt>false</tt> otherwise
+     */
     public Observable<Boolean> putRx(final String key, final Object object) {
         checkPutArgs(key, object);
 
@@ -164,6 +257,12 @@ public final class Bucket {
         });
     }
 
+    /**
+     * Cache contains key - reactive, using an Observable.
+     *
+     * @param key key
+     * @return Observable that emits <tt>true</tt> if cache contains key, <tt>false</tt> otherwise
+     */
     public Observable<Boolean> containsRx(final String key) {
         checkKeyArg(key);
 
@@ -174,6 +273,12 @@ public final class Bucket {
         });
     }
 
+    /**
+     * Remove cache value - reactive, using an Observable.
+     *
+     * @param key key
+     * @return Observable that emits <tt>true</tt> if successful, <tt>false</tt> otherwise
+     */
     public Observable<Boolean> removeRx(final String key) {
         checkKeyArg(key);
 
@@ -185,6 +290,11 @@ public final class Bucket {
         });
     }
 
+    /**
+     * Clear all cache values - reactive, using an Observable.
+     *
+     * @return Observable that emits <tt>true</tt> if successful, <tt>false</tt> otherwise
+     */
     public Observable<Boolean> clearRx() {
         return createObservable(new Callable<Boolean>() {
             @Override public Boolean call() throws Exception {
@@ -242,12 +352,22 @@ public final class Bucket {
 
     // region Builder
 
+    /**
+     * Returns a Builder.
+     *
+     * @param context context
+     * @param maxSizeBytes max size of cache in bytes
+     * @return Builder instance
+     */
     public static Builder builder(Context context, long maxSizeBytes) {
         checkObjectArgumentNull(context, "context");
 
         return new Builder(context.getApplicationContext(), maxSizeBytes);
     }
 
+    /**
+     * Bucket Builder.
+     */
     public static final class Builder {
 
         private final Context context;
@@ -262,21 +382,47 @@ public final class Bucket {
             this.maxSizeBytes = maxSizeBytes;
         }
 
+        /**
+         * Set a custom Gson instance.
+         *
+         * @param gson gson instance
+         * @return Builder
+         */
         public Builder withGson(Gson gson) {
             this.gson = gson;
             return this;
         }
 
+        /**
+         * Set a custom subscribeOn scheduler to control the thread the background processing takes place.
+         * Defaults to the IO thread from {@link Schedulers#io()}.
+         *
+         * @param scheduler scheduler for background processing
+         * @return Builder
+         */
         public Builder withSubscribeScheduler(Scheduler scheduler) {
             this.subscribeScheduler = scheduler;
             return this;
         }
 
+        /**
+         * Set a custom observeOn scheduler to control the thread that receives the updates.
+         * Defaults to the Android main thread from {@link AndroidSchedulers#mainThread()}.
+         *
+         * @param scheduler scheduler to receive the updates
+         * @return Builder
+         */
         public Builder withObserveScheduler(Scheduler scheduler) {
             this.observeScheduler = scheduler;
             return this;
         }
 
+        /**
+         * Build the Bucket.
+         *
+         * @return Bucket instance
+         * @throws IOException
+         */
         public synchronized Bucket build() throws IOException {
             String cachePath = context.getCacheDir() + CACHE_DIR;
 
