@@ -2,6 +2,9 @@ package com.github.simonpercic.bucket;
 
 import android.content.Context;
 
+import com.github.simonpercic.bucket.callback.BucketCallback;
+import com.github.simonpercic.bucket.callback.BucketFailureCallback;
+import com.github.simonpercic.bucket.callback.BucketGetCallback;
 import com.github.simonpercic.bucket.utils.StringUtils;
 import com.google.gson.Gson;
 
@@ -14,6 +17,7 @@ import rx.Observable.OnSubscribe;
 import rx.Scheduler;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 /**
@@ -76,6 +80,71 @@ public final class BucketCache {
     }
 
     // endregion synchronous methods
+
+    // region asynchronous methods
+
+    public <T> void getAsync(String key, Type typeOfT, final BucketGetCallback<T> callback) {
+        checkStringArgumentEmpty(key, "key");
+        checkObjectArgumentNull(typeOfT, "typeOfT");
+
+        Observable<T> get = getRx(key, typeOfT);
+        doAsync(get, callback);
+    }
+
+    public void putAsync(String key, Object object, final BucketCallback callback) {
+        checkStringArgumentEmpty(key, "key");
+        checkObjectArgumentNull(object, "object");
+
+        doAsync(putRx(key, object), callback);
+    }
+
+    public void containsAsync(String key, final BucketGetCallback<Boolean> callback) {
+        checkStringArgumentEmpty(key, "key");
+
+        doAsync(containsRx(key), callback);
+    }
+
+    public void removeAsync(String key, final BucketCallback callback) {
+        checkStringArgumentEmpty(key, "key");
+
+        doAsync(removeRx(key), callback);
+    }
+
+    public void clearAsync(final BucketCallback callback) {
+        doAsync(clearRx(), callback);
+    }
+
+    private static void doAsync(Observable<Boolean> observable, final BucketCallback callback) {
+        observable.subscribe(new Action1<Boolean>() {
+            @Override public void call(Boolean aBoolean) {
+                if (callback != null) {
+                    callback.onSuccess();
+                }
+            }
+        }, asyncOnError(callback));
+    }
+
+    private static <T> void doAsync(Observable<T> observable, final BucketGetCallback<T> callback) {
+        observable.subscribe(new Action1<T>() {
+            @Override public void call(T t) {
+                if (callback != null) {
+                    callback.onSuccess(t);
+                }
+            }
+        }, asyncOnError(callback));
+    }
+
+    private static Action1<Throwable> asyncOnError(final BucketFailureCallback callback) {
+        return new Action1<Throwable>() {
+            @Override public void call(Throwable throwable) {
+                if (callback != null) {
+                    callback.onFailure(throwable);
+                }
+            }
+        };
+    }
+
+    // endregion asynchronous methods
 
     // region Reactive methods
 
