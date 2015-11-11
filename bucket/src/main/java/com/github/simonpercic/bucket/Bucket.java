@@ -30,7 +30,7 @@ import rx.schedulers.Schedulers;
  * - remove and
  * - clear
  * Contains synchronous, asynchronous and RxJava methods.
- * Create an instance through the Builder, obtained by calling {@link #builder(Context, long) builder}
+ * Create an instance through the Builder, obtained by calling {@link #builder(android.content.Context, long) builder}
  *
  * @author Simon Percic <a href="https://github.com/simonpercic">https://github.com/simonpercic</a>
  */
@@ -395,7 +395,7 @@ public final class Bucket {
 
         /**
          * Set a custom subscribeOn scheduler to control the thread the background processing takes place.
-         * Defaults to the IO thread from {@link Schedulers#io()}.
+         * Defaults to the IO thread from Schedulers.io()
          *
          * @param scheduler scheduler for background processing
          * @return Builder
@@ -407,7 +407,7 @@ public final class Bucket {
 
         /**
          * Set a custom observeOn scheduler to control the thread that receives the updates.
-         * Defaults to the Android main thread from {@link AndroidSchedulers#mainThread()}.
+         * Defaults to the Android main thread from AndroidSchedulers.mainThread()
          *
          * @param scheduler scheduler to receive the updates
          * @return Builder
