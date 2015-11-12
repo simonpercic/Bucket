@@ -20,7 +20,7 @@ Bucket contains synchronous, async and Rx methods for all operations.
 
 Add using Gradle:
 ```groovy
-compile 'TODO'
+compile 'com.github.simonpercic:bucket:1.0.0'
 ```
 
 #### Initialize
