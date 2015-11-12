@@ -5,6 +5,7 @@ Bucket is a disk cache library for Android. You can use it to cache any object t
 [DiskLruCache by Jake Wharton](https://github.com/JakeWharton/DiskLruCache) is used as the underlying cache.
 
 [![Build Status](https://api.travis-ci.org/simonpercic/Bucket.svg?branch=master)](https://travis-ci.org/simonpercic/Bucket)
+[ ![Download](https://api.bintray.com/packages/simonpercic/maven/bucket/images/download.svg) ](https://bintray.com/simonpercic/maven/bucket/_latestVersion)
 
 #### Supported operations:
 
