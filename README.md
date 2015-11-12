@@ -1,5 +1,7 @@
 # Bucket 
 
+![Logo](https://raw.githubusercontent.com/simonpercic/Bucket/master/art/logo.png)
+
 Bucket is a disk cache library for Android. You can use it to cache any object that can be serialized to json.
 
 [DiskLruCache by Jake Wharton](https://github.com/JakeWharton/DiskLruCache) is used as the underlying cache.
