@@ -12,8 +12,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-import rx.Scheduler;
-import rx.schedulers.Schedulers;
+import io.reactivex.Scheduler;
+import io.reactivex.schedulers.Schedulers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -70,7 +70,7 @@ public class BucketBuildTest {
 
     @Test
     public void testBuildSubscribeScheduler() throws Exception {
-        Scheduler scheduler = Schedulers.immediate();
+        Scheduler scheduler = Schedulers.trampoline();
         bucket = Bucket.builder(context, 1024 * 1024).withSubscribeScheduler(scheduler).build();
 
         assertNotNull(bucket);
@@ -88,7 +88,7 @@ public class BucketBuildTest {
 
     @Test
     public void testBuildObserveScheduler() throws Exception {
-        Scheduler scheduler = Schedulers.immediate();
+        Scheduler scheduler = Schedulers.trampoline();
         bucket = Bucket.builder(context, 1024 * 1024).withObserveScheduler(scheduler).build();
 
         assertNotNull(bucket);

@@ -13,8 +13,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
+
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -44,8 +45,8 @@ public class BucketAsyncTest {
 
     private Bucket createCache() throws IOException {
         return Bucket.builder(context, 1024 * 1024)
-                .withSubscribeScheduler(Schedulers.immediate())
-                .withObserveScheduler(Schedulers.immediate())
+                .withSubscribeScheduler(Schedulers.trampoline())
+                .withObserveScheduler(Schedulers.trampoline())
                 .build();
     }
 
@@ -58,8 +59,9 @@ public class BucketAsyncTest {
 
         bucket.put(key, new SimpleObject(value));
 
-        bucket.getAsync(key, SimpleObject.class, new TestBucketGetCallback<>(new Action1<SimpleObject>() {
-            @Override public void call(SimpleObject simpleObject) {
+        bucket.getAsync(key, SimpleObject.class, new TestBucketGetCallback<>(new Consumer<SimpleObject>() {
+            @Override
+            public void accept(SimpleObject simpleObject) {
                 assertEquals(value, simpleObject.getValue());
             }
         }));
@@ -92,8 +94,9 @@ public class BucketAsyncTest {
 
         bucket.put(key, new SimpleObject(value));
 
-        bucket.<Boolean>containsAsync(key, new TestBucketGetCallback<>(new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        bucket.<Boolean>containsAsync(key, new TestBucketGetCallback<>(new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertTrue(aBoolean);
             }
         }));
@@ -105,8 +108,9 @@ public class BucketAsyncTest {
 
         final String key = "TEST_KEY";
 
-        bucket.<Boolean>containsAsync(key, new TestBucketGetCallback<>(new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        bucket.<Boolean>containsAsync(key, new TestBucketGetCallback<>(new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertFalse(aBoolean);
             }
         }));
@@ -154,15 +158,15 @@ public class BucketAsyncTest {
 
     private static class TestBucketGetCallback<T> implements BucketGetCallback<T> {
 
-        private final Action1<T> assertAction;
+        private final Consumer<T> assertAction;
 
-        private TestBucketGetCallback(Action1<T> assertAction) {
+        private TestBucketGetCallback(Consumer<T> assertAction) {
             this.assertAction = assertAction;
         }
 
-        @Override public void onSuccess(T t) {
+        @Override public void onSuccess(T t) throws Exception {
             assertNotNull(t);
-            assertAction.call(t);
+            assertAction.accept(t);
         }
 
         @Override public void onFailure(Throwable throwable) {

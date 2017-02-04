@@ -12,10 +12,11 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
-import rx.Observable;
-import rx.functions.Action1;
-import rx.observers.TestSubscriber;
-import rx.schedulers.Schedulers;
+import io.reactivex.Observable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.observers.TestObserver;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subscribers.TestSubscriber;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -45,8 +46,8 @@ public class BucketRxTest {
 
     private Bucket createCache() throws IOException {
         return Bucket.builder(context, 1024 * 1024)
-                .withSubscribeScheduler(Schedulers.immediate())
-                .withObserveScheduler(Schedulers.immediate())
+                .withSubscribeScheduler(Schedulers.trampoline())
+                .withObserveScheduler(Schedulers.trampoline())
                 .build();
     }
 
@@ -59,8 +60,9 @@ public class BucketRxTest {
 
         bucket.put(key, new SimpleObject(value));
 
-        testObservable(bucket.<SimpleObject>getRx(key, SimpleObject.class), new Action1<SimpleObject>() {
-            @Override public void call(SimpleObject simpleObject) {
+        testObservable(bucket.<SimpleObject>getRx(key, SimpleObject.class), new Consumer<SimpleObject>() {
+            @Override
+            public void accept(SimpleObject simpleObject) {
                 assertEquals(value, simpleObject.getValue());
             }
         });
@@ -73,8 +75,9 @@ public class BucketRxTest {
         final String key = "TEST_KEY";
         final String value = "TEST_VALUE";
 
-        testObservable(bucket.<Boolean>putRx(key, new SimpleObject(value)), new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        testObservable(bucket.<Boolean>putRx(key, new SimpleObject(value)), new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertTrue(aBoolean);
 
                 try {
@@ -95,8 +98,9 @@ public class BucketRxTest {
 
         bucket.put(key, new SimpleObject(value));
 
-        testObservable(bucket.<Boolean>containsRx(key), new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        testObservable(bucket.<Boolean>containsRx(key), new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertTrue(aBoolean);
             }
         });
@@ -108,8 +112,9 @@ public class BucketRxTest {
 
         final String key = "TEST_KEY";
 
-        testObservable(bucket.<Boolean>containsRx(key), new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        testObservable(bucket.<Boolean>containsRx(key), new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertFalse(aBoolean);
             }
         });
@@ -124,8 +129,9 @@ public class BucketRxTest {
 
         bucket.put(key, new SimpleObject(value));
 
-        testObservable(bucket.<Boolean>removeRx(key), new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        testObservable(bucket.<Boolean>removeRx(key), new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertTrue(aBoolean);
 
                 try {
@@ -146,8 +152,9 @@ public class BucketRxTest {
 
         bucket.put(key, new SimpleObject(value));
 
-        testObservable(bucket.<Boolean>clearRx(), new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        testObservable(bucket.<Boolean>clearRx(), new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 assertTrue(aBoolean);
 
                 try {
@@ -159,18 +166,19 @@ public class BucketRxTest {
         });
     }
 
-    private static <T> void testObservable(Observable<T> observable, Action1<T> assertAction) {
-        TestSubscriber<T> testSubscriber = new TestSubscriber<>();
-        observable.subscribe(testSubscriber);
+    private static <T> void testObservable(Observable<T> observable, Consumer<T> assertAction) throws Exception {
+        TestObserver<T> testSubscriber = observable.test();
 
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
 
-        List<T> onNextEvents = testSubscriber.getOnNextEvents();
-        assertEquals(1, onNextEvents.size());
+        List<List<Object>> onNextEvents = testSubscriber.getEvents();
+        assertEquals(1, onNextEvents.get(0).size());
+        assertEquals(0, onNextEvents.get(1).size());
+        assertEquals(1, onNextEvents.get(2).size());
 
-        T value = onNextEvents.get(0);
+        T value = (T)onNextEvents.get(0).get(0);
         assertNotNull(value);
-        assertAction.call(value);
+        assertAction.accept(value);
     }
 }
