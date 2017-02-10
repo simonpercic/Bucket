@@ -12,5 +12,5 @@ public interface BucketGetCallback<T> extends BucketFailureCallback {
      *
      * @param object returned object
      */
-    void onSuccess(T object);
+    void onSuccess(T object) throws Exception;
 }

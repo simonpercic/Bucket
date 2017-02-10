@@ -13,13 +13,13 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 
-import rx.Observable;
-import rx.Observable.OnSubscribe;
-import rx.Scheduler;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Bucket - a disk cache.
@@ -55,9 +55,9 @@ public final class Bucket {
     /**
      * Get from cache.
      *
-     * @param key key
+     * @param key     key
      * @param typeOfT type of cache value
-     * @param <T> T of cache value
+     * @param <T>     T of cache value
      * @return cache value
      * @throws IOException
      */
@@ -77,7 +77,7 @@ public final class Bucket {
     /**
      * Put value to cache.
      *
-     * @param key key
+     * @param key    key
      * @param object object
      * @throws IOException
      */
@@ -129,10 +129,10 @@ public final class Bucket {
     /**
      * Get from cache - async, using a callback.
      *
-     * @param key key
-     * @param typeOfT type of cache value
+     * @param key      key
+     * @param typeOfT  type of cache value
      * @param callback callback that will be invoked to return the value
-     * @param <T> T of cache value
+     * @param <T>      T of cache value
      */
     public <T> void getAsync(String key, Type typeOfT, final BucketGetCallback<T> callback) {
         checkGetArgs(key, typeOfT);
@@ -144,8 +144,8 @@ public final class Bucket {
     /**
      * Put value to cache - async, using a callback.
      *
-     * @param key key
-     * @param object object
+     * @param key      key
+     * @param object   object
      * @param callback callback that will be invoked to report status
      */
     public void putAsync(String key, Object object, final BucketCallback callback) {
@@ -157,7 +157,7 @@ public final class Bucket {
     /**
      * Cache contains key - async, using a callback.
      *
-     * @param key key
+     * @param key      key
      * @param callback callback that will be invoked to report contains state
      */
     public void containsAsync(String key, final BucketGetCallback<Boolean> callback) {
@@ -169,7 +169,7 @@ public final class Bucket {
     /**
      * Remove cache value - async, using a callback.
      *
-     * @param key key
+     * @param key      key
      * @param callback callback that will be invoked to report status
      */
     public void removeAsync(String key, final BucketCallback callback) {
@@ -188,8 +188,9 @@ public final class Bucket {
     }
 
     private static void doAsync(Observable<Boolean> observable, final BucketCallback callback) {
-        observable.subscribe(new Action1<Boolean>() {
-            @Override public void call(Boolean aBoolean) {
+        observable.subscribe(new Consumer<Boolean>() {
+            @Override
+            public void accept(Boolean aBoolean) {
                 if (callback != null) {
                     callback.onSuccess();
                 }
@@ -198,8 +199,9 @@ public final class Bucket {
     }
 
     private static <T> void doAsync(Observable<T> observable, final BucketGetCallback<T> callback) {
-        observable.subscribe(new Action1<T>() {
-            @Override public void call(T t) {
+        observable.subscribe(new Consumer<T>() {
+            @Override
+            public void accept(T t) throws Exception {
                 if (callback != null) {
                     callback.onSuccess(t);
                 }
@@ -207,9 +209,10 @@ public final class Bucket {
         }, asyncOnError(callback));
     }
 
-    private static Action1<Throwable> asyncOnError(final BucketFailureCallback callback) {
-        return new Action1<Throwable>() {
-            @Override public void call(Throwable throwable) {
+    private static Consumer<Throwable> asyncOnError(final BucketFailureCallback callback) {
+        return new Consumer<Throwable>() {
+            @Override
+            public void accept(Throwable throwable) {
                 if (callback != null) {
                     callback.onFailure(throwable);
                 }
@@ -224,16 +227,17 @@ public final class Bucket {
     /**
      * Get from cache - reactive, using an Observable.
      *
-     * @param key key
+     * @param key     key
      * @param typeOfT type of cache value
-     * @param <T> T of cache value
+     * @param <T>     T of cache value
      * @return Observable that emits the cache value
      */
     public <T> Observable<T> getRx(final String key, final Type typeOfT) {
         checkGetArgs(key, typeOfT);
 
         return createObservable(new Callable<T>() {
-            @Override public T call() throws Exception {
+            @Override
+            public T call() throws Exception {
                 return get(key, typeOfT);
             }
         });
@@ -242,7 +246,7 @@ public final class Bucket {
     /**
      * Put value to cache - reactive, using an Observable.
      *
-     * @param key key
+     * @param key    key
      * @param object object
      * @return Observable that emits <tt>true</tt> if successful, <tt>false</tt> otherwise
      */
@@ -250,7 +254,8 @@ public final class Bucket {
         checkPutArgs(key, object);
 
         return createObservable(new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 put(key, object);
                 return true;
             }
@@ -267,7 +272,8 @@ public final class Bucket {
         checkKeyArg(key);
 
         return createObservable(new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 return contains(key);
             }
         });
@@ -283,7 +289,8 @@ public final class Bucket {
         checkKeyArg(key);
 
         return createObservable(new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 remove(key);
                 return true;
             }
@@ -297,7 +304,8 @@ public final class Bucket {
      */
     public Observable<Boolean> clearRx() {
         return createObservable(new Callable<Boolean>() {
-            @Override public Boolean call() throws Exception {
+            @Override
+            public Boolean call() throws Exception {
                 clear();
                 return true;
             }
@@ -305,14 +313,15 @@ public final class Bucket {
     }
 
     private <T> Observable<T> createObservable(final Callable<T> func) {
-        return Observable.create(new OnSubscribe<T>() {
-            @Override public void call(Subscriber<? super T> subscriber) {
+        return Observable.create(new ObservableOnSubscribe<T>() {
+            @Override
+            public void subscribe(ObservableEmitter<T> emitter) throws Exception {
                 try {
                     T object = func.call();
-                    subscriber.onNext(object);
-                    subscriber.onCompleted();
+                    emitter.onNext(object);
+                    emitter.onComplete();
                 } catch (Exception e) {
-                    subscriber.onError(e);
+                    emitter.onError(e);
                 }
             }
         }).subscribeOn(subscribeScheduler).observeOn(observeScheduler);
@@ -355,7 +364,7 @@ public final class Bucket {
     /**
      * Returns a Builder.
      *
-     * @param context context
+     * @param context      context
      * @param maxSizeBytes max size of cache in bytes
      * @return Builder instance
      */
